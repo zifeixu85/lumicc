@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local data — NEVER commit
+~/.commerce-os/
+.commerce-os/
+**/secrets/
+**/sessions/
+**/runs/
+**/assets/runs/

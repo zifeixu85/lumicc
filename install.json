@@ -1,0 +1,47 @@
+{
+  "manifest_version": 1,
+  "bundle_name": "lumicc",
+  "version": "1.0.0",
+  "description": "Cross-Border Commerce OS · 12 skills · local-first, agent-agnostic, zero credentials leaked to LLM",
+  "license": "MIT",
+  "homepage": "https://github.com/zifeixu85/lumicc",
+  "skills": [
+    {"name": "lumicc",           "path": "skills/lumicc",           "pillar": "orchestrator", "primary": true},
+    {"name": "lumicc-launch",    "path": "skills/lumicc-launch",    "pillar": "launch"},
+    {"name": "lumicc-listing",   "path": "skills/lumicc-listing",   "pillar": "convert"},
+    {"name": "lumicc-expand",    "path": "skills/lumicc-expand",    "pillar": "convert"},
+    {"name": "lumicc-retention", "path": "skills/lumicc-retention", "pillar": "retain"},
+    {"name": "lumicc-voc",       "path": "skills/lumicc-voc",       "pillar": "retain"},
+    {"name": "lumicc-watch",     "path": "skills/lumicc-watch",     "pillar": "attract"},
+    {"name": "lumicc-seo",       "path": "skills/lumicc-seo",       "pillar": "attract"},
+    {"name": "lumicc-content",   "path": "skills/lumicc-content",   "pillar": "attract"},
+    {"name": "lumicc-rescue",    "path": "skills/lumicc-rescue",    "pillar": "rescue"},
+    {"name": "lumicc-publish",   "path": "skills/lumicc-publish",   "pillar": "ops"},
+    {"name": "lumicc-dashboard", "path": "skills/lumicc-dashboard", "pillar": "ops"}
+  ],
+  "compatibility": {
+    "agents": ["claude-code", "codex", "cursor", "openclaw", "hermes", "gemini-cli"],
+    "channels": ["feishu", "discord", "telegram", "slack", "wechat", "line", "imessage", "email"],
+    "python": ">=3.10",
+    "platforms": ["macos", "linux"],
+    "dependencies": "stdlib only (lumicc-publish encryption requires `cryptography` if used)"
+  },
+  "install_targets": {
+    "claude-code": "~/.claude/skills",
+    "openclaw": "~/.openclaw/skills",
+    "openclaw-workspace": "<workspace>/skills",
+    "hermes": "~/.hermes/skills",
+    "manual": "~/<target>/skills"
+  },
+  "install_commands": {
+    "openclaw": "openclaw skills install github:zifeixu85/lumicc",
+    "hermes": "hermes skills install github:zifeixu85/lumicc",
+    "claude-code": "git clone https://github.com/zifeixu85/lumicc && cd lumicc && ./install.sh",
+    "feishu-bot": "Send to bot: @bot install https://github.com/zifeixu85/lumicc",
+    "discord-bot": "Send in DM: !install lumicc https://github.com/zifeixu85/lumicc"
+  },
+  "post_install": {
+    "verify": "./bin/lumicc test",
+    "quickstart": "./bin/lumicc init && ./bin/lumicc dashboard"
+  }
+}

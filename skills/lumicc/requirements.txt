@@ -1,0 +1,6 @@
+# Lumicc — Cross-Border Commerce OS
+# All scripts use Python 3.8+ stdlib only. No `pip install` required.
+#
+# Optional adapters (installed by the USER, not by Lumicc):
+#   - playwright  — only for lumicc-watch JS-heavy storefronts
+#   - any capability-slot adapter the user prefers (see references/required-skills.md)

@@ -1,0 +1,205 @@
+#!/usr/bin/env bash
+# Lumicc CLI launcher
+#
+# Routes `lumicc <sub> [args]` to the corresponding skill's run.py.
+#
+# Usage:
+#   lumicc init                          - create / migrate ~/.commerce-os/store.db
+#   lumicc dashboard                     - render dashboard HTML
+#   lumicc launch [args]                 - 30-day cold start plan
+#   lumicc watch [args]                  - competitor watchtower
+#   lumicc retention [args]              - RFM / VIP / winback
+#   lumicc voc [args]                    - review clustering
+#   lumicc listing [args]                - listing health check
+#   lumicc expand [args]                 - product expansion engine
+#   lumicc rescue [args]                 - crisis response triage
+#   lumicc seo [args]                    - SEO / GEO analysis
+#   lumicc content [args]                - image/video prompt builder
+#   lumicc route --intent "<msg>"        - run main router
+#   lumicc install [--target T] [--dry-run] [--quiet-stdout]
+#                                        - install skills into agent runtime
+#                                          (auto-detects claude-code/openclaw/hermes)
+#   lumicc test                          - run all skill smoke tests
+#   lumicc version                       - print version
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SKILLS_DIR_REPO="$REPO_DIR/skills"
+SKILLS_DIR_INSTALLED="$HOME/.claude/skills"
+
+# Prefer the installed location if both exist (so updates pick up); fall back
+# to the in-repo skills directory.
+if [[ -d "$SKILLS_DIR_INSTALLED/lumicc" ]]; then
+  SKILLS_DIR="$SKILLS_DIR_INSTALLED"
+elif [[ -d "$SKILLS_DIR_REPO/lumicc" ]]; then
+  SKILLS_DIR="$SKILLS_DIR_REPO"
+else
+  echo "✗ Lumicc skills not found at $SKILLS_DIR_INSTALLED or $SKILLS_DIR_REPO" >&2
+  echo "  Run ./install.sh first." >&2
+  exit 1
+fi
+
+VERSION="$(cat "$REPO_DIR/VERSION" 2>/dev/null || echo "?")"
+
+usage() {
+  grep -E "^# " "$0" | sed 's/^# \?//'
+}
+
+run_skill() {
+  local skill="$1"; shift
+  local script="$SKILLS_DIR/$skill/scripts/run.py"
+  if [[ ! -f "$script" ]]; then
+    # Some skills use a different entrypoint
+    if [[ -f "$SKILLS_DIR/$skill/scripts/render.py" ]]; then
+      script="$SKILLS_DIR/$skill/scripts/render.py"
+    else
+      echo "✗ No entrypoint found for $skill" >&2
+      exit 1
+    fi
+  fi
+  exec python3 "$script" "$@"
+}
+
+[[ $# -eq 0 ]] && { usage; exit 0; }
+
+cmd="$1"; shift
+
+case "$cmd" in
+  -h|--help|help)
+    usage ;;
+  -v|--version|version)
+    echo "lumicc $VERSION" ;;
+  init)
+    exec python3 "$SKILLS_DIR/lumicc/scripts/init_store.py" "$@" ;;
+  route)
+    exec python3 "$SKILLS_DIR/lumicc/scripts/route.py" "$@" ;;
+  dashboard)
+    exec python3 "$SKILLS_DIR/lumicc-dashboard/scripts/render.py" "$@" ;;
+  launch|watch|retention|voc|listing|expand|rescue|seo|content)
+    run_skill "lumicc-$cmd" "$@" ;;
+  install)
+    # Sub-args: --target <claude-code|openclaw|hermes|manual> [--dry-run] [--quiet-stdout]
+    TARGET=""
+    DRY_RUN=0
+    QUIET=0
+    MANUAL_DEST=""
+    while [[ $# -gt 0 ]]; do
+      case "$1" in
+        --target) TARGET="$2"; shift 2 ;;
+        --dest) MANUAL_DEST="$2"; shift 2 ;;
+        --dry-run) DRY_RUN=1; shift ;;
+        --quiet-stdout) QUIET=1; shift ;;
+        *) echo "Unknown install arg: $1" >&2; exit 2 ;;
+      esac
+    done
+
+    # Auto-detect target if not provided.
+    if [[ -z "$TARGET" ]]; then
+      if [[ -n "${LUMICC_TARGET:-}" ]]; then
+        TARGET="$LUMICC_TARGET"
+      elif [[ -d "$HOME/.hermes/skills" ]]; then
+        TARGET="hermes"
+      elif [[ -d "$HOME/.openclaw/skills" ]]; then
+        TARGET="openclaw"
+      else
+        TARGET="claude-code"
+      fi
+    fi
+
+    case "$TARGET" in
+      claude-code) DEST="$HOME/.claude/skills" ;;
+      openclaw)    DEST="$HOME/.openclaw/skills" ;;
+      hermes)      DEST="$HOME/.hermes/skills" ;;
+      manual)
+        if [[ -z "$MANUAL_DEST" ]]; then
+          [[ $QUIET -eq 0 ]] && {
+            echo "Manual install — set destination via --dest <path>" >&2
+            echo "Skills would be copied to <dest>/skills/" >&2
+            for d in "$REPO_DIR/skills"/*/; do
+              echo "  • $(basename "$d") → <dest>/$(basename "$d")" >&2
+            done
+          }
+          exit 0
+        fi
+        DEST="$MANUAL_DEST"
+        ;;
+      *) echo "Unknown target: $TARGET (expected claude-code|openclaw|hermes|manual)" >&2; exit 2 ;;
+    esac
+
+    SOURCE_DIR="$REPO_DIR/skills"
+    if [[ ! -d "$SOURCE_DIR" ]]; then
+      echo "✗ Source skills/ not found at $SOURCE_DIR" >&2; exit 1
+    fi
+
+    # Count skills
+    SKILL_COUNT=0
+    for d in "$SOURCE_DIR"/*/; do [[ -d "$d" ]] && SKILL_COUNT=$((SKILL_COUNT+1)); done
+
+    if [[ $DRY_RUN -eq 1 ]]; then
+      if [[ $QUIET -eq 0 ]]; then
+        echo "[dry-run] target=$TARGET destination=$DEST"
+        for d in "$SOURCE_DIR"/*/; do
+          echo "  would copy $(basename "$d") → $DEST/$(basename "$d")"
+        done
+        echo "[dry-run] $SKILL_COUNT skills would be installed"
+      else
+        printf '{"dry_run": true, "installed_target": "%s", "destination": "%s", "skills_installed": %d, "manifest_version": 1}\n' \
+          "$TARGET" "$DEST" "$SKILL_COUNT"
+      fi
+      exit 0
+    fi
+
+    mkdir -p "$DEST"
+    if command -v rsync >/dev/null 2>&1; then
+      rsync -a --exclude='__pycache__' --exclude='*.pyc' --exclude='.DS_Store' \
+        "$SOURCE_DIR/" "$DEST/" >/dev/null
+    else
+      for d in "$SOURCE_DIR"/*/; do
+        name=$(basename "$d")
+        rm -rf "$DEST/$name"
+        cp -R "$d" "$DEST/$name"
+        find "$DEST/$name" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+      done
+    fi
+
+    if [[ $QUIET -eq 1 ]]; then
+      printf '{"installed_target": "%s", "destination": "%s", "skills_installed": %d, "manifest_version": 1}\n' \
+        "$TARGET" "$DEST" "$SKILL_COUNT"
+    else
+      echo "✓ Installed $SKILL_COUNT skills to $DEST (target=$TARGET)"
+    fi
+    exit 0 ;;
+  test)
+    echo "Running all skill + infrastructure tests..."
+    pass=0; fail=0
+    for d in "$SKILLS_DIR"/lumicc "$SKILLS_DIR"/lumicc-*; do
+      [[ -d "$d" ]] || continue
+      skill=$(basename "$d")
+      # Order: smoke first, infrastructure next, e2e last (e2e mutates ~/.commerce-os)
+      for t in test_smoke.py test_session.py test_secret_form.py test_picker.py \
+               test_html_lib_embed.py test_assets.py test_anti_slop.py \
+               test_adapter_csv.py test_adapter_indep.py test_adapter_shopify.py \
+               test_adapter_amazon_sp.py test_install_manifest.py \
+               test_render.py test_content.py test_image_client.py \
+               test_expand.py test_launch.py test_listing.py test_rescue.py \
+               test_retention.py test_seo.py test_voc.py test_watch.py \
+               test_publish.py test_e2e_flow.py; do
+        tf="$d/scripts/$t"
+        [[ -f "$tf" ]] || continue
+        if python3 "$tf" >/dev/null 2>&1; then
+          echo "  ✓ $skill/$t"; pass=$((pass+1))
+        else
+          echo "  ✗ $skill/$t"; fail=$((fail+1))
+        fi
+      done
+    done
+    echo
+    echo "  $pass passed · $fail failed"
+    [[ $fail -eq 0 ]] || exit 1 ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    echo "Run 'lumicc help' for usage." >&2
+    exit 2 ;;
+esac
