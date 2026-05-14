@@ -125,6 +125,11 @@ MIGRATIONS: dict[int, list[str]] = {1: [DDL_V1], 2: [DDL_V2]}
 def get_root(root: str | None = None) -> Path:
     if root:
         return Path(root).expanduser()
+    # Honor LUMICC_DATA_ROOT for consistency with session.py / secret_form.py /
+    # adapters / home.py — lets tests + multi-env setups isolate cleanly.
+    env_root = os.environ.get("LUMICC_DATA_ROOT")
+    if env_root:
+        return Path(env_root).expanduser()
     return Path.home() / ".commerce-os"
 
 

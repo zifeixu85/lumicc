@@ -4,6 +4,8 @@
 # Routes `lumicc <sub> [args]` to the corresponding skill's run.py.
 #
 # Usage:
+#   lumicc                               - open the control center (跨店今日焦点首屏)
+#   lumicc home [--store-id ID]          - same as above; --store-id 只看一家店
 #   lumicc init                          - create / migrate ~/.commerce-os/store.db
 #   lumicc dashboard                     - render dashboard HTML
 #   lumicc launch [args]                 - 30-day cold start plan
@@ -62,7 +64,8 @@ run_skill() {
   exec python3 "$script" "$@"
 }
 
-[[ $# -eq 0 ]] && { usage; exit 0; }
+# Bare `lumicc` → open the control center (跨店今日焦点首屏)
+[[ $# -eq 0 ]] && { exec python3 "$SKILLS_DIR/lumicc/scripts/home.py"; }
 
 cmd="$1"; shift
 
@@ -71,6 +74,8 @@ case "$cmd" in
     usage ;;
   -v|--version|version)
     echo "lumicc $VERSION" ;;
+  home)
+    exec python3 "$SKILLS_DIR/lumicc/scripts/home.py" "$@" ;;
   init)
     exec python3 "$SKILLS_DIR/lumicc/scripts/init_store.py" "$@" ;;
   route)
@@ -179,7 +184,7 @@ case "$cmd" in
       skill=$(basename "$d")
       # Order: smoke first, infrastructure next, e2e last (e2e mutates ~/.commerce-os)
       for t in test_smoke.py test_session.py test_secret_form.py test_picker.py \
-               test_html_lib_embed.py test_assets.py test_anti_slop.py \
+               test_home.py test_html_lib_embed.py test_assets.py test_anti_slop.py \
                test_adapter_csv.py test_adapter_indep.py test_adapter_shopify.py \
                test_adapter_amazon_sp.py test_install_manifest.py \
                test_render.py test_content.py test_image_client.py \

@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-brightgreen)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Skills](https://img.shields.io/badge/skills-12-green)](skills/)
-[![Tests](https://img.shields.io/badge/tests-25%2F25_passing-brightgreen)](#运行测试)
+[![Tests](https://img.shields.io/badge/tests-26%2F26_passing-brightgreen)](#运行测试)
 [![Security](https://img.shields.io/badge/credentials-never_in_LLM-red)](#凭据安全)
 
 ---
@@ -44,7 +44,7 @@
 
 ---
 
-## 11 个 Skill · 按 4 支柱叙事
+## 12 个 Skill · 按 4 支柱叙事
 
 ```
                    ┌──────────────────────────────┐
@@ -107,7 +107,7 @@ git clone https://github.com/<your-user>/lumicc.git ~/lumicc
 cd ~/lumicc && ./install.sh
 ```
 
-安装脚本会自动检测当前 agent runtime（默认 `~/.claude/skills/`），跑完后让 Claude Code 自动发现 11 个 skill 的 SKILL.md。
+安装脚本会自动检测当前 agent runtime（默认 `~/.claude/skills/`），跑完后让 Claude Code 自动发现 12 个 skill 的 SKILL.md。
 
 **2. OpenClaw 用户** — 一行命令直接装：
 
@@ -115,7 +115,7 @@ cd ~/lumicc && ./install.sh
 openclaw skills install github:<your-user>/lumicc
 ```
 
-OpenClaw 读 `install.json`，把 11 个 skill 装到 `~/.openclaw/skills/` 或 workspace。
+OpenClaw 读 `install.json`，把 12 个 skill 装到 `~/.openclaw/skills/` 或 workspace。
 
 **3. Hermes 用户** — 同样一行：
 
@@ -142,9 +142,9 @@ cp -r skills/* ~/<你的-agent>/skills/
 ./bin/lumicc install --target manual --dest ~/my-agent/skills
 ```
 
-把 11 个 skill 目录原样拷过去即可；只要 runtime 读 `SKILL.md` frontmatter，Lumicc 就能跑。
+把 12 个 skill 目录原样拷过去即可；只要 runtime 读 `SKILL.md` frontmatter，Lumicc 就能跑。
 
-> 安装完成后跑 `./bin/lumicc test` 验证（15+ 测试应该通过）。
+> 安装完成后跑 `./bin/lumicc test` 验证（26 测试应该通过）。
 
 ### 初始化
 
@@ -161,6 +161,26 @@ python3 ~/.claude/skills/lumicc/scripts/init_store.py
 ```bash
 ./bin/lumicc init
 ```
+
+---
+
+## 控制台 · 一个命令看清所有店
+
+装完之后，**直接敲 `lumicc`（不带任何参数）** 就会弹出控制台首屏——不用记 12 个子命令：
+
+```bash
+lumicc            # 打开「今日焦点」控制台
+lumicc home       # 同上
+lumicc home --store-id <id>   # 只看一家店
+```
+
+控制台做三件事：
+
+1. **Portfolio 条** — 你所有店铺一行排开，每个带健康度圆点（🔴 立即 / 🟡 本周 / 🔵 可安排 / 🟢 正常）
+2. **跨店「今日焦点」feed** — 把所有店的所有待办**按紧急度排成一列**，🚨 危机在最上，每条带专家团队标签 + 一键运行命令。多店运营者一屏看清"今天什么最该管"
+3. **6 个专家团队卡片** — 点开看每个团队能做什么
+
+聚合单位是「行动项」不是「店铺」——你不用切店挨个看，所有火情自动汇总排序。
 
 ---
 
@@ -477,4 +497,4 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
-**v1.0.0** · 2026-05-14 · 12 skills · 25/25 tests passing · 4 themes · 6 personas · 9 secret keys · 6 picker kinds · 4 platform adapters (CSV / Plausible / Shopify / Amazon SP) · 真实图像生成 (evolink Nano Banana / GPT Image 2 / Sora 2) · Cloudflare 加密分享 · Anti-Slop 6 gate · 5 install channels (Claude Code / OpenClaw / Hermes / IM bot / manual) · 0 network dependencies
+**v1.0.0** · 2026-05-14 · 12 skills · 控制台首屏 · 26/26 tests passing · 4 themes · 6 personas · 9 secret keys · 6 picker kinds · 4 platform adapters (CSV / Plausible / Shopify / Amazon SP) · 真实图像生成 (evolink Nano Banana / GPT Image 2 / Sora 2) · Cloudflare 加密分享 · Anti-Slop 6 gate · 5 install channels (Claude Code / OpenClaw / Hermes / IM bot / manual) · 0 network dependencies
