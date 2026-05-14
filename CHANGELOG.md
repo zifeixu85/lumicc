@@ -6,6 +6,24 @@
 
 ---
 
+## [1.3.0] · 2026-05-14 · 真实表单向导 · 零命令暴露
+
+### Changed
+
+- **`config.py` 重建为真实本地 HTTP 服务器向导** — 从「静态 HTML + 可复制命令」改为 lumi-lab 式的活表单。用户在浏览器里**填表、点按钮、即生效**，全程不出现 shell 命令：
+  - 纯 stdlib `ThreadingHTTPServer`，绑 `127.0.0.1`（仅本地），端口 7777→7780 自动探测
+  - **4 步向导**：欢迎（Lumicc 是什么 + 6 团队 + 工作流）→ 你的店铺（有店/从零真实表单 → POST 直接建店 + 写 SOUL.md）→ 工具集成（API key 表单）→ 完成
+  - **工具集成步是重点**：每个 API key 一个字段 = 名称 + 一句话说明（这 key 解锁什么功能）+ 折叠的「怎么拿到」3-4 步引导 + `<input type="password">` + 验证并保存按钮。按用途分 5 组（电商数据 / 图像生成 / 邮件 / LLM / 部署），**全部可选**
+  - 密钥写到 `~/.commerce-os/secrets/<KEY>.json` 0600（沿用 secret_form 格式），验证 best-effort（失败也存 + 给警告）
+  - 完成步后服务器自动优雅关闭
+- CLI 保留 `--create-store`（agent 对话收集后 headless 调用）/ `--quiet-stdout` / `--status` / `--port` / `--no-open`
+
+### Why
+
+用户反馈：onboard 页里给用户看 shell 命令是错的——用户只用自然语言说话，命令是给 agent 的。API key 配置应该是真实表单，告诉用户每个工具是干嘛的，引导用户按需填写。参考 lumi-lab 的 onboarding 表单（"非常完整"）。现在表单真正能用了。
+
+---
+
 ## [1.2.0] · 2026-05-14 · 配置中心 + onboarding + 全链路可导航
 
 ### Added

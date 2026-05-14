@@ -1,7 +1,7 @@
 {
   "manifest_version": 1,
   "bundle_name": "lumicc",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Cross-Border Commerce OS · 12 skills · local-first, agent-agnostic, zero credentials leaked to LLM",
   "license": "MIT",
   "homepage": "https://github.com/zifeixu85/lumicc",
