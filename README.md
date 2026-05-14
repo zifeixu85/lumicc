@@ -4,11 +4,15 @@
 
 面向 **跨境独立站卖家 / 一人公司 / 出海小品牌团队** 的「数字运营团队」。把 ChatGPT / Claude 上零散的"帮我写文案"、"分析评论"、"看竞品"、"做选品"工作，串成一个有状态、可复盘、跨会话记忆的本地化 OS。
 
-[![Version](https://img.shields.io/badge/version-1.0.0-brightgreen)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.3.0-brightgreen)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Skills](https://img.shields.io/badge/skills-12-green)](skills/)
 [![Tests](https://img.shields.io/badge/tests-27%2F27_passing-brightgreen)](#运行测试)
 [![Security](https://img.shields.io/badge/credentials-never_in_LLM-red)](#凭据安全)
+
+## 🎬 演示视频
+
+**[▶ 在 Bilibili 观看完整演示](https://www.bilibili.com/video/BV1hM5d6LEL1/)** — 从安装到第一份运营报告，看 Lumicc 怎么把跨境运营串成一条线。
 
 ---
 
