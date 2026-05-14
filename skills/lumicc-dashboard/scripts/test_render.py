@@ -108,9 +108,22 @@ def seed(commerce_root: Path) -> dict:
             (sid, ts - 86400, cat, content, conf, count),
         )
 
+    # one run with a report.html on disk (gets a clickable link),
+    # the rest without (stay plain text)
+    reported_run_id = str(uuid.uuid4())
+    run_dir = commerce_root / "runs" / reported_run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "result.json").write_text(
+        json.dumps({"deliverables": [{"type": "report"}]}), encoding="utf-8")
+    (run_dir / "report.html").write_text("<html>report</html>", encoding="utf-8")
+    db.execute(
+        "INSERT INTO runs (run_id, skill, store_id, started_at, finished_at, status, result_path) "
+        "VALUES (?,?,?,?,?,?,?)",
+        (reported_run_id, "lumicc-launch", sid, ts - 72*3600, ts - 72*3600 + 120,
+         "success", str(run_dir / "result.json")),
+    )
     for skill, status, age_h in [
         ("lumicc", "success", 1),
-        ("lumicc-launch", "success", 72),
         ("lumicc-watch", "success", 6),
         ("lumicc-watch", "success", 18),
         ("lumicc-listing", "partial", 30),
@@ -158,7 +171,8 @@ def seed(commerce_root: Path) -> dict:
         encoding="utf-8",
     )
 
-    return {"store_id": sid, "campaign_running": cid_running}
+    return {"store_id": sid, "campaign_running": cid_running,
+            "reported_run_id": reported_run_id}
 
 
 def main() -> int:
@@ -216,6 +230,14 @@ def main() -> int:
         runs_html = (out_dir / "runs.html").read_text(encoding="utf-8")
         expect("lumicc-launch" in runs_html, "runs page shows lumicc-launch")
         expect("lumicc-watch" in runs_html, "runs page shows lumicc-watch")
+
+        # 8b) Run WITH a report.html → clickable link; runs without → plain text
+        report_href = f"../runs/{ids['reported_run_id']}/report.html"
+        expect(f'href=\'{report_href}\'' in runs_html or f'href="{report_href}"' in runs_html,
+               "runs page links to existing report.html")
+        expect("（无报告）" in runs_html, "runs without report.html stay plain text")
+        expect("runs/sample-lumicc-watch/report.html" not in runs_html,
+               "no broken link for run without report.html on disk")
 
         # 9) Memory page has all 4 tabs and content
         memory_html = (out_dir / "memory.html").read_text(encoding="utf-8")

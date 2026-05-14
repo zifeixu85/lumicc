@@ -55,10 +55,17 @@ def seed(root: Path) -> dict:
     # crisis store: a warning event in last 48h
     db.execute("INSERT INTO events (store_id, ts, category, content) VALUES (?,?,?,?)",
                (crisis_sid, ts - 3600, "warning", "广告被拒绝 — 创意涉及违规声明"))
-    # crisis store also has a recent run
+    # crisis store also has a recent run — with a report.html on disk
+    crisis_run_id = str(uuid.uuid4())
+    crisis_run_dir = root / "runs" / crisis_run_id
+    crisis_run_dir.mkdir(parents=True, exist_ok=True)
+    (crisis_run_dir / "result.json").write_text(
+        json.dumps({"metrics": {"high_severity_count": 2}}), encoding="utf-8")
+    (crisis_run_dir / "report.html").write_text("<html>report</html>", encoding="utf-8")
     db.execute("INSERT INTO runs (run_id, skill, store_id, started_at, finished_at, status, result_path) "
                "VALUES (?,?,?,?,?,?,?)",
-               (str(uuid.uuid4()), "lumicc-watch", crisis_sid, ts - 7200, ts - 7100, "success", ""))
+               (crisis_run_id, "lumicc-watch", crisis_sid, ts - 7200, ts - 7100,
+                "success", str(crisis_run_dir / "result.json")))
 
     # cold-start store: a running cold-start campaign started 5 days ago
     plan = {"schedule": [{"day": i} for i in range(1, 31)]}
@@ -77,7 +84,8 @@ def seed(root: Path) -> dict:
 
     db.commit()
     db.close()
-    return {"crisis": crisis_sid, "coldstart": coldstart_sid, "idle": idle_sid}
+    return {"crisis": crisis_sid, "coldstart": coldstart_sid, "idle": idle_sid,
+            "crisis_run_id": crisis_run_id}
 
 
 def main() -> int:
@@ -147,6 +155,13 @@ def main() -> int:
         for name in ("Acme Pets", "New Kitchen", "Old Beauty"):
             expect(name in html, f"render_home shows store '{name}'")
         expect("6 个专家团队" in html, "render_home shows team cards")
+
+        # --- 5b) run WITH report.html → href in output; runs without → no href ---
+        report_href = f"runs/{ids['crisis_run_id']}/report.html"
+        expect(report_href in html, "render_home links to existing report.html")
+        # idle store's run has result_path="" → must not produce a broken link
+        expect("runs//report.html" not in html,
+               "no broken link for run without result_path")
 
         # --- 6) store filter works ---
         state_filtered = home_mod.load_state(ids["crisis"])

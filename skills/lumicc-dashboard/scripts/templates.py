@@ -59,6 +59,18 @@ def _status_badge(status: str | None) -> str:
     return H.badge(status or "—", color=color)
 
 
+def _report_link(run: dict, *, prefix: str = "../runs") -> str | None:
+    """Return the relative href to a run's report.html if it exists on disk, else None."""
+    rp = run.get("result_path")
+    if not rp:
+        return None
+    report = Path(rp).expanduser().parent / "report.html"
+    if report.exists():
+        run_id = run.get("run_id", "")
+        return f"{prefix}/{run_id}/report.html"
+    return None
+
+
 def _nav_html(active: str) -> str:
     items = []
     for href, label in NAV_PAGES:
@@ -337,16 +349,24 @@ def render_index(ctx: dict) -> str:
 
     # Recent runs table
     if runs:
-        rows = [
-            [
+        rows = []
+        for r in runs[:6]:
+            href = _report_link(r)
+            skill_name = H.esc(r.get("skill", "—"))
+            if href:
+                skill_cell = f"<a href='{H.esc(href)}' class='mono'>{skill_name}</a>"
+                report_cell = f"<a href='{H.esc(href)}'>查看报告 →</a>"
+            else:
+                skill_cell = f"<span class='mono'>{skill_name}</span>"
+                report_cell = "<span class='muted'>（无报告）</span>"
+            rows.append([
                 f"<span class='mono muted'>{H.fmt_rel(r.get('started_at'))}</span>",
-                f"<span class='mono'>{H.esc(r.get('skill', '—'))}</span>",
+                skill_cell,
                 _status_badge(r.get("status")),
                 f"<span class='mono muted'>{H.esc((r.get('run_id', '—'))[:8])}</span>",
-            ]
-            for r in runs[:6]
-        ]
-        runs_block = H.table(headers=["时间", "Skill", "状态", "运行 ID"], rows=rows)
+                report_cell,
+            ])
+        runs_block = H.table(headers=["时间", "Skill", "状态", "运行 ID", "报告"], rows=rows)
     else:
         runs_block = H.empty_state("还没有 skill 跑过。")
     runs_section = H.section(
@@ -434,8 +454,18 @@ def render_stores(ctx: dict) -> str:
 # ---------- campaigns ----------
 def render_campaigns(ctx: dict) -> str:
     camps = ctx["campaigns"]
+    runs = ctx.get("runs", [])
     store_count = ctx.get("store_count", 0)
     head = H.page_head("运营活动", f"共 {len(camps)} 个活动")
+
+    def _launch_report(store_id: str | None) -> str | None:
+        """Find a launch run for this store that has a report."""
+        for r in runs:
+            if r.get("store_id") == store_id and r.get("skill") == "lumicc-launch":
+                href = _report_link(r)
+                if href:
+                    return href
+        return None
 
     if not camps:
         body = head + H.empty_state("还没有活动。")
@@ -460,13 +490,21 @@ def render_campaigns(ctx: dict) -> str:
             f"<div class='progress'><div class='progress-bar' style='--pct:{pct}%'></div></div>"
             f"<div class='progress-meta'>Day {day} / {day_total} · {pct}%</div>"
         )
+        card_body = progress
+        if c.get("type") == "cold-start" and plan:
+            href = _launch_report(c.get("store_id"))
+            if href:
+                card_body += (
+                    f"<div style='margin-top:10px;'>"
+                    f"<a href='{H.esc(href)}'>查看 launch 报告 →</a></div>"
+                )
         cards.append(H.card(
             title=f"活动 · {H.esc((c.get('id', '—'))[:8])}",
             tag=c.get("type", "—"),
             tag_color="emerald" if c.get("status") == "running" else "zinc",
             status=c.get("status"),
             meta=f"开始于 {H.fmt_ts(c.get('started_at'))} · 预算 {_fmt_money(c.get('budget_usd'))}",
-            body=progress,
+            body=card_body,
         ))
     body = head + H.card_grid(cards, min_width=300)
     return _wrap(title="运营活动", active="campaigns", body=body, store_count=store_count)
@@ -496,14 +534,23 @@ def render_runs(ctx: dict) -> str:
                         deliv = " · ".join(H.esc(i.get("type", "?")) for i in items[:3])
         except (json.JSONDecodeError, OSError):
             pass
+        href = _report_link(r)
+        skill_name = H.esc(r.get("skill", "—"))
+        if href:
+            skill_cell = f"<a href='{H.esc(href)}' class='mono'>{skill_name}</a>"
+            report_cell = f"<a href='{H.esc(href)}'>查看报告 →</a>"
+        else:
+            skill_cell = f"<span class='mono'>{skill_name}</span>"
+            report_cell = "<span class='muted'>（无报告）</span>"
         rows.append([
             f"<span class='mono muted'>{H.fmt_ts(r.get('started_at'))}</span>",
-            f"<span class='mono'>{H.esc(r.get('skill', '—'))}</span>",
+            skill_cell,
             _status_badge(r.get("status")),
             f"<span class='mono muted'>{H.esc((r.get('run_id', '—'))[:12])}</span>",
             f"<span class='muted'>{deliv}</span>",
+            report_cell,
         ])
-    body = head + H.table(headers=["开始时间", "Skill", "状态", "运行 ID", "产出物"], rows=rows)
+    body = head + H.table(headers=["开始时间", "Skill", "状态", "运行 ID", "产出物", "报告"], rows=rows)
     return _wrap(title="跑次记录", active="runs", body=body, store_count=store_count)
 
 

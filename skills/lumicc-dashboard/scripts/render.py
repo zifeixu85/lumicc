@@ -137,7 +137,11 @@ def stores_ctx(state: dict) -> dict:
 
 
 def campaigns_ctx(state: dict) -> dict:
-    return {"campaigns": state["campaigns"], "store_count": len(state["stores"])}
+    return {
+        "campaigns": state["campaigns"],
+        "runs": state["runs"],
+        "store_count": len(state["stores"]),
+    }
 
 
 def runs_ctx(state: dict) -> dict:

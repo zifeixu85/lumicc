@@ -7,7 +7,7 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-brightgreen)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 [![Skills](https://img.shields.io/badge/skills-12-green)](skills/)
-[![Tests](https://img.shields.io/badge/tests-26%2F26_passing-brightgreen)](#运行测试)
+[![Tests](https://img.shields.io/badge/tests-27%2F27_passing-brightgreen)](#运行测试)
 [![Security](https://img.shields.io/badge/credentials-never_in_LLM-red)](#凭据安全)
 
 ---
@@ -497,4 +497,4 @@ MIT — see [LICENSE](LICENSE).
 
 ---
 
-**v1.0.0** · 2026-05-14 · 12 skills · 控制台首屏 · 26/26 tests passing · 4 themes · 6 personas · 9 secret keys · 6 picker kinds · 4 platform adapters (CSV / Plausible / Shopify / Amazon SP) · 真实图像生成 (evolink Nano Banana / GPT Image 2 / Sora 2) · Cloudflare 加密分享 · Anti-Slop 6 gate · 5 install channels (Claude Code / OpenClaw / Hermes / IM bot / manual) · 0 network dependencies
+**v1.0.0** · 2026-05-14 · 12 skills · 控制台+配置中心 · 27/27 tests passing · 4 themes · 6 personas · 9 secret keys · 6 picker kinds · 4 platform adapters (CSV / Plausible / Shopify / Amazon SP) · 真实图像生成 (evolink Nano Banana / GPT Image 2 / Sora 2) · Cloudflare 加密分享 · Anti-Slop 6 gate · 5 install channels (Claude Code / OpenClaw / Hermes / IM bot / manual) · 0 network dependencies

@@ -6,6 +6,32 @@
 
 ---
 
+## [1.2.0] · 2026-05-14 · 配置中心 + onboarding + 全链路可导航
+
+### Added
+
+- **`lumicc/scripts/config.py`** — 统一配置中心 + onboarding 入口（`lumicc config` / `lumicc onboard`），两种模式自适应：
+  - **首次（无店铺）= Landing 引导** — 介绍 Lumicc 是什么、6 个专家团队各能干嘛、典型工作流（选品→上架→引流→转化→留存→救火），两个行动卡（接入已有店 / 从零开始）
+  - **后期（有店铺）= 配置中心** — 店铺列表、API 凭据状态表（X/N 已配置 · fingerprint · 每个 key 的 `secret_form --generate` 命令可一键复制）、SOUL.md 预览、当前主题 + 4 主题切换说明
+  - `--create-store --platform X --market Y --niche Z --stage S` 直接建店 + 写 SOUL.md 初稿
+  - `--create-store --from-json <path>` 供 HTML 向导回调
+- **`bin/lumicc config` / `bin/lumicc onboard`** 命令 — 解决两个痛点：初始化时有了配置引导，后期有了快速改配置入口
+
+### Changed
+
+- **Dashboard + 控制台全链路可导航** — 之前 runs/campaigns 只是死文本，现在：
+  - dashboard runs 页 + index 最近跑次 → 每行链到 `../runs/<id>/report.html`，新增"报告"列
+  - cold-start campaign 卡片 → 链到对应 `lumicc-launch` 报告
+  - `home.py` 控制台 focus-feed + 最近产出 chips → 可点进 `runs/<id>/report.html`
+  - 只链磁盘上真实存在的文件，绝不产生断链
+- `bin/lumicc` 测试列表加入 `test_config.py` — **27/27 测试通过**
+
+### Why
+
+用户反馈：初始化时没有配置引导，后期也没有快速改配置的方案；dashboard 看到活动却点不进去详情。v1.2 把"装完 → 第一家店 → 看到活动点进详情"这条路打通——产品从一堆断链 HTML 变成可点可导航的整体。
+
+---
+
 ## [1.1.0] · 2026-05-14 · 控制台首屏 · 一个命令看清所有店
 
 ### Added

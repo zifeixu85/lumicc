@@ -112,6 +112,17 @@ _CRISIS_WORDS = ("警告", "暴跌", "被封", "拒绝", "下架", "suppress", "
                  "crash", "dropped", "disapprov", "violation")
 
 
+def _report_href(run: dict) -> str | None:
+    """Relative href (from home.html) to a run's report.html if it exists, else None."""
+    rp = run.get("result_path")
+    if not rp:
+        return None
+    report = Path(rp).expanduser().parent / "report.html"
+    if report.exists():
+        return f"runs/{run.get('run_id', '')}/report.html"
+    return None
+
+
 def _band(score: int) -> tuple[str, str, str]:
     for threshold, name, color, label in _URGENCY_BANDS:
         if score >= threshold:
@@ -147,12 +158,13 @@ def action_items_for_store(store: dict, events: list[dict],
     sname = store.get("name") or "（未命名店铺）"
     now = int(time.time())
 
-    def add(team, emoji, title, detail, skill, urgency):
+    def add(team, emoji, title, detail, skill, urgency, report_href=None):
         items.append({
             "store_id": sid, "store_name": sname, "team": team, "emoji": emoji,
             "title": title, "detail": detail, "skill": skill,
             "command": f"lumicc {skill.replace('lumicc-', '')}" if skill else "",
             "urgency": urgency, "urgency_label": _band(urgency)[2],
+            "report_href": report_href,
         })
 
     # 1. Crisis events in last 48h → highest urgency
@@ -202,7 +214,8 @@ def action_items_for_store(store: dict, events: list[dict],
             n_skill, n_team, n_emoji, n_reason, n_urg = nxt
             add(n_team, n_emoji,
                 f"{sname} · {skill} 跑完了",
-                n_reason, n_skill, n_urg)
+                n_reason, n_skill, n_urg,
+                report_href=_report_href(last))
 
     # 6. No items at all → store is healthy / idle, low-priority "all clear"
     if not items:
@@ -315,6 +328,11 @@ def _focus_feed(items: list[dict]) -> str:
         cmd_html = (
             f'<code class="focus-cmd">{cmd}</code>' if cmd else ""
         )
+        report_href = it.get("report_href")
+        report_html = (
+            f'<a class="focus-report" href="{H.esc(report_href)}">查看上次报告 →</a>'
+            if report_href else ""
+        )
         rows.append(
             f'<div class="focus-item" style="--accent-band:var(--{color});">'
             f'<div class="focus-emoji">{it["emoji"]}</div>'
@@ -325,6 +343,7 @@ def _focus_feed(items: list[dict]) -> str:
             f'<span class="focus-team">{H.esc(it["team"])}</span>'
             f'<span class="focus-urgency focus-urgency-{color}">{label}</span>'
             f'{cmd_html}'
+            f'{report_html}'
             f'</div></div></div>'
         )
     return '<div class="focus-feed">' + "".join(rows) + "</div>"
@@ -352,10 +371,17 @@ def _recent_outputs(runs: list[dict]) -> str:
         status = r.get("status") or "?"
         color = {"success": "emerald", "partial": "amber",
                  "failed": "rose"}.get(status, "zinc")
-        chips.append(
-            f'<span class="output-chip">{H.badge(skill, color)}'
-            f'<span class="output-when mono">{H.fmt_rel(r.get("started_at"))}</span></span>'
+        inner = (
+            f'{H.badge(skill, color)}'
+            f'<span class="output-when mono">{H.fmt_rel(r.get("started_at"))}</span>'
         )
+        href = _report_href(r)
+        if href:
+            chips.append(
+                f'<a class="output-chip output-chip-link" href="{H.esc(href)}">{inner}</a>'
+            )
+        else:
+            chips.append(f'<span class="output-chip">{inner}</span>')
     return '<div class="output-chips">' + "".join(chips) + "</div>"
 
 
@@ -394,6 +420,11 @@ _HOME_CSS = """
 .focus-urgency-emerald { background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accent); }
 .focus-cmd { font-size: 11px; padding: 2px 8px; background: var(--surface-2);
   border-radius: 4px; color: var(--ink-muted); }
+.focus-report { font-size: 11px; color: var(--accent); text-decoration: none; }
+.focus-report:hover { text-decoration: underline; }
+.output-chip-link { text-decoration: none; padding: 2px 6px; border-radius: 6px;
+  transition: background .15s; }
+.output-chip-link:hover { background: var(--surface-2); }
 .team-card { background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 16px 18px; transition: border-color .15s, transform .15s; }
 .team-card:hover { border-color: var(--accent); transform: translateY(-2px); }
